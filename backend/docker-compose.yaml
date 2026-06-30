@@ -1,0 +1,134 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-expensetracker
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: springuser
+      MYSQL_PASSWORD: springboot
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - microservice-network
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.0
+    container_name: zookeeper-expensetracker
+    restart: always
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    ports:
+      - "2181:2181"
+    networks:
+      - microservice-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: kafka-expensetracker
+    restart: always
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+    networks:
+      - microservice-network
+
+  user-service:
+    image: user-service:latest
+    container_name: user-service-expensetracker
+    ports:
+      - "9810:9810"
+    environment:
+      KAFKA_HOST: ${KAFKA_HOST}
+      KAFKA_PORT: ${KAFKA_PORT}
+      MYSQL_HOST: ${MYSQL_HOST}
+      MYSQL_PORT: ${MYSQL_PORT}
+      MYSQL_DB: userservice
+    depends_on:
+      - kafka
+      - mysql
+      - auth-service
+    networks:
+      - microservice-network
+
+  auth-service:
+    image: auth-service:latest
+    container_name: auth-service-expensetracker
+    ports:
+      - "9898:9898"
+    environment:
+      KAFKA_HOST: ${KAFKA_HOST}
+      KAFKA_PORT: ${KAFKA_PORT}
+      MYSQL_HOST: ${MYSQL_HOST}
+      MYSQL_PORT: ${MYSQL_PORT}
+      MYSQL_DB: authservice
+    depends_on:
+      - kafka
+      - mysql
+    networks:
+      - microservice-network
+    
+  expense-service:
+    image: expense-service:latest
+    container_name: expense-service-expensetracker
+    ports:
+      - "9820:9820"
+    environment:
+      KAFKA_HOST: ${KAFKA_HOST}
+      KAFKA_PORT: ${KAFKA_PORT}
+      MYSQL_HOST: ${MYSQL_HOST}
+      MYSQL_PORT: ${MYSQL_PORT}
+      MYSQL_DB: expenseservice
+    depends_on:
+      - kafka
+      - mysql
+    networks:
+      - microservice-network
+  ds-service:
+    image: ds-service:latest
+    container_name: ds-service-expensetracker
+    ports:
+      - "8010:8010"
+    environment:
+      KAFKA_HOST: ${KAFKA_HOST}
+      KAFKA_PORT: ${KAFKA_PORT}
+      MISTRAL_API_KEY: ${MISTRAL_API_KEY}
+    depends_on:
+      - kafka
+      - mysql
+      - expense-service
+      - user-service
+    networks:
+      - microservice-network
+  kong:
+    image: kong:latest
+    container_name: kong
+    depends_on:
+      - auth-service
+      - user-service
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /kong/declarative/kong.yml
+    volumes:
+      - ./kong.yml:/kong/declarative/kong.yml
+    networks:
+      - microservice-network
+volumes:
+  mysql_data:
+
+networks:
+  microservice-network:
+    driver: bridge
