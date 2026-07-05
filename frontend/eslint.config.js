@@ -1,10 +1,20 @@
-// https://docs.expo.dev/guides/using-eslint/
-const { defineConfig } = require('eslint/config');
-const expoConfig = require('eslint-config-expo/flat');
+//  @ts-check
 
-module.exports = defineConfig([
-  expoConfig,
+import { tanstackConfig } from '@tanstack/eslint-config'
+
+export default [
+  ...tanstackConfig,
   {
-    ignores: ['dist/*'],
+    rules: {
+      'import/no-cycle': 'off',
+      'import/order': 'off',
+      'sort-imports': 'off',
+      '@typescript-eslint/array-type': 'off',
+      '@typescript-eslint/require-await': 'off',
+      'pnpm/json-enforce-catalog': 'off',
+    },
   },
-]);
+  {
+    ignores: ['eslint.config.js', 'prettier.config.js', '.output/**'],
+  },
+]
