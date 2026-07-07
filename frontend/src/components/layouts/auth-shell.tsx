@@ -26,10 +26,10 @@ export function AuthShell({
 
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
             {[
-              ['Session persistence', 'The app remembers the current user in local storage.'],
-              ['Protected routes', 'Unauthorized visitors are redirected out of the workspace.'],
-              ['Mock API layer', 'Auth flows are isolated behind a service boundary.'],
-              ['Router-friendly', 'The structure is ready for later server integration.'],
+              ['JWT authentication', 'Tokens from the Spring Boot AuthService with automatic refresh.'],
+              ['Protected routes', 'Unauthorized visitors are redirected to the login screen.'],
+              ['Microservice ready', 'Auth, User, and Expense services each have their own endpoint.'],
+              ['Kong migration path', 'Switch to API gateway routing with a single env var change.'],
             ].map(([label, value]) => (
               <article key={label} className="rounded-2xl border border-(--line) bg-orange-800/50 p-4">
                 <p className="m-0 text-sm font-semibold text-(--sea-ink)">{label}</p>

@@ -32,12 +32,17 @@ public class ExpenseController {
     }
 
     @PostMapping(path="/addExpense")
-    public ResponseEntity<Boolean> addExpenses(@RequestHeader(value = "X-User-Id") @NonNull String userId, ExpenseDto expenseDto){
+    public ResponseEntity<Boolean> addExpenses(@RequestHeader(value = "X-User-Id") @NonNull String userId, @RequestBody ExpenseDto expenseDto){
         try{
             expenseDto.setUserId(userId);
             return new ResponseEntity<>(expenseService.createExpense(expenseDto), HttpStatus.OK);
         }catch (Exception ex){
             return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
         }
+    }
+
+    @GetMapping("/health")
+    public ResponseEntity<Boolean> checkHealth(){
+        return new ResponseEntity<>(true, HttpStatus.OK);
     }
 }

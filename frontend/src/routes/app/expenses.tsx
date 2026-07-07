@@ -15,10 +15,10 @@ export const Route = createFileRoute('/app/expenses')({ component: ExpensesPage 
 
 function ExpensesPage() {
   const { user } = useAuth()
-  const { data: expenses = [], isLoading } = useExpenses(user?.id)
-  const createExpense = useCreateExpense(user?.id ?? 'anonymous')
-  const updateExpense = useUpdateExpense(user?.id ?? 'anonymous')
-  const deleteExpense = useDeleteExpense(user?.id ?? 'anonymous')
+  const { data: expenses = [], isLoading } = useExpenses(user?.userId)
+  const createExpense = useCreateExpense(user?.userId ?? 'anonymous')
+  const updateExpense = useUpdateExpense(user?.userId ?? 'anonymous')
+  const deleteExpense = useDeleteExpense(user?.userId ?? 'anonymous')
 
   const [filters, setFilters] = useState<ExpenseFilters>({
     search: '',
@@ -27,7 +27,7 @@ function ExpensesPage() {
   })
   const [selectedExpense, setSelectedExpense] = useState<ExpenseItem | null>(null)
 
-  const currentCurrency = user?.currency ?? 'USD'
+  const currentCurrency = 'USD'
   const money = useMemo(
     () =>
       new Intl.NumberFormat('en-US', {
@@ -90,7 +90,7 @@ function ExpensesPage() {
   )
 
   async function handleSave(values: ExpenseFormValues) {
-    if (!user?.id) {
+    if (!user?.userId) {
       return
     }
 
@@ -104,7 +104,7 @@ function ExpensesPage() {
   }
 
   async function handleDelete(expense: ExpenseItem) {
-    if (!user?.id) {
+    if (!user?.userId) {
       return
     }
 

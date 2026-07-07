@@ -17,9 +17,12 @@ function SignupPage() {
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
-      fullName: '',
-      email: '',
+      username: '',
       password: '',
+      firstName: '',
+      lastName: '',
+      email: '',
+      phoneNumber: undefined as unknown as number,
     },
   })
 
@@ -30,7 +33,11 @@ function SignupPage() {
       await signup(values)
       navigate({ to: '/app', replace: true })
     } catch (signupError) {
-      setError(signupError instanceof Error ? signupError.message : 'Unable to sign up.')
+      if (signupError instanceof Error) {
+        setError(signupError.message)
+      } else {
+        setError('Unable to create account. Please try again.')
+      }
     }
   }
 
@@ -40,44 +47,67 @@ function SignupPage() {
   return (
     <AuthShell
       eyebrow="Create your workspace"
-      title="Set up Expense Tracker in a few seconds"
-      description="The account service is mock-backed for now, but the route, state, and form boundaries match the final backend integration path."
+      title="Set up your Expense Tracker account"
+      description="Register through the Spring Boot AuthService. Your profile data is published to the UserService via Kafka."
     >
       <form className="space-y-5" onSubmit={handleFormSubmit(handleSubmit)} noValidate>
-        <div className="space-y-2">
-          <label className="text-sm font-semibold text-(--sea-ink)" htmlFor="fullName">
-            Full name
-          </label>
-          <input
-            id="fullName"
-            type="text"
-            autoComplete="name"
-            placeholder="Alex Morgan"
-            className="w-full rounded-2xl border border-(--line) bg-white/70 px-4 py-3 text-sm text-(--sea-ink) outline-none transition focus:border-(--lagoon-deep) focus:ring-2 focus:ring-[rgba(79,184,178,0.18)]"
-            {...register('fullName')}
-          />
-          {formState.errors.fullName ? (
-            <p className="m-0 text-sm text-[rgb(138,36,36)]">
-              {formState.errors.fullName.message}
-            </p>
-          ) : null}
+        {/* ── Identity ─────────────────────────────────────── */}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-(--sea-ink)" htmlFor="firstName">
+              First name
+            </label>
+            <input
+              id="firstName"
+              type="text"
+              autoComplete="given-name"
+              placeholder="Alex"
+              className="w-full rounded-2xl border border-(--line) bg-white/70 px-4 py-3 text-sm text-(--sea-ink) outline-none transition focus:border-(--lagoon-deep) focus:ring-2 focus:ring-[rgba(79,184,178,0.18)]"
+              {...register('firstName')}
+            />
+            {formState.errors.firstName ? (
+              <p className="m-0 text-sm text-[rgb(138,36,36)]">
+                {formState.errors.firstName.message}
+              </p>
+            ) : null}
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-(--sea-ink)" htmlFor="lastName">
+              Last name
+            </label>
+            <input
+              id="lastName"
+              type="text"
+              autoComplete="family-name"
+              placeholder="Morgan"
+              className="w-full rounded-2xl border border-(--line) bg-white/70 px-4 py-3 text-sm text-(--sea-ink) outline-none transition focus:border-(--lagoon-deep) focus:ring-2 focus:ring-[rgba(79,184,178,0.18)]"
+              {...register('lastName')}
+            />
+            {formState.errors.lastName ? (
+              <p className="m-0 text-sm text-[rgb(138,36,36)]">
+                {formState.errors.lastName.message}
+              </p>
+            ) : null}
+          </div>
         </div>
 
+        {/* ── Credentials ──────────────────────────────────── */}
         <div className="space-y-2">
-          <label className="text-sm font-semibold text-(--sea-ink)" htmlFor="email">
-            Email
+          <label className="text-sm font-semibold text-(--sea-ink)" htmlFor="username">
+            Username
           </label>
           <input
-            id="email"
-            type="email"
-            autoComplete="email"
-            placeholder="you@company.com"
+            id="username"
+            type="text"
+            autoComplete="username"
+            placeholder="alexmorgan"
             className="w-full rounded-2xl border border-(--line) bg-white/70 px-4 py-3 text-sm text-(--sea-ink) outline-none transition focus:border-(--lagoon-deep) focus:ring-2 focus:ring-[rgba(79,184,178,0.18)]"
-            {...register('email')}
+            {...register('username')}
           />
-          {formState.errors.email ? (
+          {formState.errors.username ? (
             <p className="m-0 text-sm text-[rgb(138,36,36)]">
-              {formState.errors.email.message}
+              {formState.errors.username.message}
             </p>
           ) : null}
         </div>
@@ -101,6 +131,46 @@ function SignupPage() {
           ) : null}
         </div>
 
+        {/* ── Contact ──────────────────────────────────────── */}
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-(--sea-ink)" htmlFor="email">
+            Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            autoComplete="email"
+            placeholder="you@company.com"
+            className="w-full rounded-2xl border border-(--line) bg-white/70 px-4 py-3 text-sm text-(--sea-ink) outline-none transition focus:border-(--lagoon-deep) focus:ring-2 focus:ring-[rgba(79,184,178,0.18)]"
+            {...register('email')}
+          />
+          {formState.errors.email ? (
+            <p className="m-0 text-sm text-[rgb(138,36,36)]">
+              {formState.errors.email.message}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-(--sea-ink)" htmlFor="phoneNumber">
+            Phone number
+          </label>
+          <input
+            id="phoneNumber"
+            type="tel"
+            autoComplete="tel"
+            placeholder="9876543210"
+            className="w-full rounded-2xl border border-(--line) bg-white/70 px-4 py-3 text-sm text-(--sea-ink) outline-none transition focus:border-(--lagoon-deep) focus:ring-2 focus:ring-[rgba(79,184,178,0.18)]"
+            {...register('phoneNumber', { valueAsNumber: true })}
+          />
+          {formState.errors.phoneNumber ? (
+            <p className="m-0 text-sm text-[rgb(138,36,36)]">
+              {formState.errors.phoneNumber.message}
+            </p>
+          ) : null}
+        </div>
+
+        {/* ── Submit ───────────────────────────────────────── */}
         {error ? (
           <p className="rounded-2xl border border-[rgba(180,65,65,0.2)] bg-[rgba(180,65,65,0.08)] px-4 py-3 text-sm text-[rgb(138,36,36)]">
             {error}

@@ -45,7 +45,7 @@ export default function Header() {
         <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
           <div className="hidden items-center gap-2 rounded-full border border-(--chip-line) bg-(--chip-bg) px-3 py-1.5 text-xs font-semibold text-(--sea-ink-soft) sm:flex">
             <Menu className="h-4 w-4" />
-            <span>{user?.fullName ?? 'Guest'}</span>
+            <span>{user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.username ?? 'Guest'}</span>
           </div>
           {isAuthenticated ? (
             <button

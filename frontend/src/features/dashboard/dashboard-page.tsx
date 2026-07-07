@@ -32,9 +32,9 @@ const chartPalette = [
 
 export function DashboardPage() {
   const { user } = useAuth()
-  const { data: expenses = [], isLoading } = useExpenses(user?.id)
+  const { data: expenses = [], isLoading } = useExpenses(user?.userId)
 
-  const currentCurrency = user?.currency ?? 'USD'
+  const currentCurrency = 'USD'
 
   const money = useMemo(
     () =>
@@ -50,7 +50,6 @@ export function DashboardPage() {
 
   const totalSpent = useMemo(() => calculateTotalSpent(sortedExpenses), [sortedExpenses])
 
-  const remainingBudget = Math.max((user?.monthlyBudget ?? 0) - totalSpent, 0)
   const expenseCount = sortedExpenses.length
   const averageExpense = expenseCount > 0 ? totalSpent / expenseCount : 0
 
@@ -94,7 +93,7 @@ export function DashboardPage() {
           <div>
             <p className="island-kicker mb-3">Dashboard</p>
             <h1 className="display-title mb-3 text-4xl font-bold text-(--sea-ink) sm:text-5xl">
-              Welcome back, {user?.fullName.split(' ')[0] ?? 'there'}.
+              Welcome back, {user?.firstName || user?.username || 'there'}.
             </h1>
             <p className="max-w-2xl text-base leading-8 text-(--sea-ink-soft) sm:text-lg">
               See your current spend, biggest categories, and recent activity at a glance.
@@ -102,21 +101,15 @@ export function DashboardPage() {
             </p>
           </div>
 
-          <div className="rounded-2xl border border-(--line) bg-orange-700/70 px-5 py-4 text-sm text-(--sea-ink-soft)">
-            <p className="m-0 font-semibold text-(--sea-ink)">Monthly budget</p>
-            <p className="m-0 mt-1 text-base">
-              {money.format(user?.monthlyBudget ?? 0)} budgeted
-            </p>
-          </div>
         </div>
       </section>
 
       <section className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[
           ['Monthly spend', money.format(totalSpent), 'All visible expenses'],
-          ['Budget left', money.format(remainingBudget), 'After current month spend'],
           ['Transactions', String(expenseCount), 'Records in the ledger'],
           ['Average expense', money.format(averageExpense), 'Per transaction'],
+          ['Top category', topCategoryLabel, topCategorySummary],
         ].map(([label, value, description]) => (
           <article key={label} className="island-shell rounded-2xl p-5">
             <p className="m-0 text-sm font-semibold text-(--sea-ink-soft)">{label}</p>
@@ -138,29 +131,31 @@ export function DashboardPage() {
             </span>
           </div>
 
-          <div className="mt-5 h-85 rounded-2xl border border-(--line)  p-4">
+          <div className="relative mt-5 h-[340px] rounded-2xl border border-(--line) p-4">
             {isLoading ? (
               <div className="flex h-full items-center justify-center text-sm text-(--sea-ink-soft)">
                 Loading chart data...
               </div>
             ) : monthlyChartData.length > 0 ? (
               <ChartContainer config={monthlyChartConfig} className="h-full w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={monthlyChartData} margin={{ top: 10, right: 18, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="label" tickLine={false} axisLine={false} />
-                    <YAxis tickLine={false} axisLine={false} width={42} tickFormatter={(value) => `$${value}`} />
-                    <ChartTooltip labelFormatter={(label) => `Month: ${label}`} />
-                    <Area
-                      type="monotone"
-                      dataKey="total"
-                      stroke="var(--chart-1)"
-                      fill="var(--chart-1)"
-                      fillOpacity={0.22}
-                      strokeWidth={2.5}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
+                <div className="h-full w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={monthlyChartData} margin={{ top: 10, right: 18, left: 0, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                      <XAxis dataKey="label" tickLine={false} axisLine={false} />
+                      <YAxis tickLine={false} axisLine={false} width={42} tickFormatter={(value) => `$${value}`} />
+                      <ChartTooltip labelFormatter={(label) => `Month: ${label}`} />
+                      <Area
+                        type="monotone"
+                        dataKey="total"
+                        stroke="var(--chart-1)"
+                        fill="var(--chart-1)"
+                        fillOpacity={0.22}
+                        strokeWidth={2.5}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
               </ChartContainer>
             ) : (
               <div className="flex h-full items-center justify-center text-sm text-(--sea-ink-soft)">
@@ -181,31 +176,36 @@ export function DashboardPage() {
             </span>
           </div>
 
-          <div className="mt-5 h-85 rounded-2xl border border-(--line)  p-4">
+          <div className="relative mt-5 h-[340px] rounded-2xl border border-(--line) p-4">
             {isLoading ? (
               <div className="flex h-full items-center justify-center text-sm text-(--sea-ink-soft)">
                 Loading chart data...
               </div>
             ) : categoryBreakdown.length > 0 ? (
               <ChartContainer config={categoryChartConfig} className="h-full w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={categoryBreakdown}
-                      dataKey="total"
-                      nameKey="category"
-                      innerRadius={70}
-                      outerRadius={110}
-                      paddingAngle={3}
-                    >
-                      {categoryBreakdown.map((entry) => (
-                        <Cell key={entry.category} fill={entry.fill} />
-                      ))}
-                    </Pie>
-                    <ChartTooltip labelFormatter={(label) => `${label}`} />
-                    <ChartLegend />
-                  </PieChart>
-                </ResponsiveContainer>
+                <div className="h-full w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={categoryBreakdown}
+                        dataKey="total"
+                        nameKey="category"
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={70}
+                        outerRadius={110}
+                        paddingAngle={3}
+                        isAnimationActive={false}
+                      >
+                        {categoryBreakdown.map((entry) => (
+                          <Cell key={entry.category} fill={entry.fill} />
+                        ))}
+                      </Pie>
+                      <ChartTooltip labelFormatter={() => undefined} />
+                      <ChartLegend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
               </ChartContainer>
             ) : (
               <div className="flex h-full items-center justify-center text-sm text-(--sea-ink-soft)">

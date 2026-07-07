@@ -1,4 +1,4 @@
-import type { ExpenseCategory, ExpenseItem } from '../../features/expenses/expense.types'
+import type { ExpenseItem } from '../../features/expenses/expense.types'
 import type { ExpenseFormValues } from '../../features/expenses/expense.schemas'
 
 type ExpenseStore = Record<string, ExpenseItem[]>
@@ -199,6 +199,19 @@ function applyExpenseUpdate(
 export const expenseApi = {
   listExpenses: async (userId: string): Promise<ExpenseItem[]> => {
     const store = readStore()
+    
+    // Seed default mock expenses if the user's ledger is currently empty
+    if (!store[userId] || store[userId].length === 0) {
+      const userDefaults = DEFAULT_EXPENSES.map((expense) => ({
+        ...expense,
+        id: `expense-${userId}-${expense.id.split('-')[1]}`,
+        userId: userId,
+      }))
+      store[userId] = userDefaults
+      writeStore(store)
+      return sortExpenses(userDefaults)
+    }
+
     return sortExpenses(store[userId] ?? [])
   },
   createExpense: async (

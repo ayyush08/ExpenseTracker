@@ -17,8 +17,8 @@ function LoginPage() {
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: 'demo@expensetracker.app',
-      password: 'password123',
+      username: '',
+      password: '',
     },
   })
 
@@ -29,7 +29,11 @@ function LoginPage() {
       await login(values)
       navigate({ to: '/app', replace: true })
     } catch (loginError) {
-      setError(loginError instanceof Error ? loginError.message : 'Unable to sign in.')
+      if (loginError instanceof Error) {
+        setError(loginError.message)
+      } else {
+        setError('Unable to sign in. Please check your credentials.')
+      }
     }
   }
 
@@ -40,24 +44,24 @@ function LoginPage() {
     <AuthShell
       eyebrow="Welcome back"
       title="Sign in to your Expense Tracker workspace"
-      description="Use the mock auth layer today and swap in the Spring Boot API later without touching the route structure."
+      description="Authenticate against the Spring Boot AuthService. Your JWT is automatically refreshed before expiry."
     >
       <form className="space-y-5" onSubmit={handleFormSubmit(handleSubmit)} noValidate>
         <div className="space-y-2">
-          <label className="text-sm font-semibold text-(--sea-ink)" htmlFor="email">
-            Email
+          <label className="text-sm font-semibold text-(--sea-ink)" htmlFor="username">
+            Username
           </label>
           <input
-            id="email"
-            type="email"
-            autoComplete="email"
-            placeholder="demo@expensetracker.app"
+            id="username"
+            type="text"
+            autoComplete="username"
+            placeholder="Enter your username"
             className="w-full rounded-2xl border border-(--line) bg-white/70 px-4 py-3 text-sm text-(--sea-ink) outline-none transition focus:border-(--lagoon-deep) focus:ring-2 focus:ring-[rgba(79,184,178,0.18)]"
-            {...register('email')}
+            {...register('username')}
           />
-          {formState.errors.email ? (
+          {formState.errors.username ? (
             <p className="m-0 text-sm text-[rgb(138,36,36)]">
-              {formState.errors.email.message}
+              {formState.errors.username.message}
             </p>
           ) : null}
         </div>
@@ -70,7 +74,7 @@ function LoginPage() {
             id="password"
             type="password"
             autoComplete="current-password"
-            placeholder="password123"
+            placeholder="Enter your password"
             className="w-full rounded-2xl border border-(--line) bg-white/70 px-4 py-3 text-sm text-(--sea-ink) outline-none transition focus:border-(--lagoon-deep) focus:ring-2 focus:ring-[rgba(79,184,178,0.18)]"
             {...register('password')}
           />
@@ -95,9 +99,6 @@ function LoginPage() {
           {isSubmitting ? 'Signing in...' : 'Sign in'}
         </button>
 
-        <p className="text-sm text-(--sea-ink-soft)">
-          Demo account: demo@expensetracker.app / password123
-        </p>
         <p className="text-sm text-(--sea-ink-soft)">
           New here?{' '}
           <Link to="/signup" className="font-semibold text-(--lagoon-deep)">
