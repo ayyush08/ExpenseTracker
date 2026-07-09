@@ -11,6 +11,13 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     networks:
       - microservice-network
 
@@ -50,8 +57,9 @@ services:
       - microservice-network
 
   user-service:
-    image: user-service:latest
+    build: ./userservice
     container_name: user-service-expensetracker
+    restart: on-failure
     ports:
       - "9810:9810"
     environment:
@@ -61,15 +69,19 @@ services:
       MYSQL_PORT: ${MYSQL_PORT}
       MYSQL_DB: userservice
     depends_on:
-      - kafka
-      - mysql
-      - auth-service
+      kafka:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
     networks:
       - microservice-network
 
   auth-service:
-    image: auth-service:latest
+    build: ./AuthService
     container_name: auth-service-expensetracker
+    restart: on-failure
     ports:
       - "9898:9898"
     environment:
@@ -79,14 +91,17 @@ services:
       MYSQL_PORT: ${MYSQL_PORT}
       MYSQL_DB: authservice
     depends_on:
-      - kafka
-      - mysql
+      kafka:
+        condition: service_started
+      mysql:
+        condition: service_healthy
     networks:
       - microservice-network
     
   expense-service:
-    image: expense-service:latest
+    build: ./expense-service
     container_name: expense-service-expensetracker
+    restart: on-failure
     ports:
       - "9820:9820"
     environment:
@@ -96,12 +111,14 @@ services:
       MYSQL_PORT: ${MYSQL_PORT}
       MYSQL_DB: expenseservice
     depends_on:
-      - kafka
-      - mysql
+      kafka:
+        condition: service_started
+      mysql:
+        condition: service_healthy
     networks:
       - microservice-network
   ds-service:
-    image: ds-service:latest
+    build: ./ds-service
     container_name: ds-service-expensetracker
     ports:
       - "8010:8010"
@@ -117,19 +134,27 @@ services:
     networks:
       - microservice-network
   kong:
-    image: kong:latest
+    build:
+      context: ./kong
+      dockerfile: Dockerfile
     container_name: kong
     depends_on:
       - auth-service
       - user-service
+      - expense-service
+      - ds-service
     ports:
       - "8000:8000"
       - "8001:8001"
     environment:
       KONG_DATABASE: "off"
       KONG_DECLARATIVE_CONFIG: /kong/declarative/kong.yml
+      KONG_PLUGINS: "bundled,custom-auth"
+      KONG_PROXY_ACCESS_LOG: "/dev/stdout"
+      KONG_PROXY_ERROR_LOG: "/dev/stderr"
     volumes:
-      - ./kong.yml:/kong/declarative/kong.yml
+      - ./kong/kong.yml:/kong/declarative/kong.yml
+      - ./kong/plugins/custom-auth:/usr/local/share/lua/5.1/kong/plugins/custom-auth
     networks:
       - microservice-network
 volumes:

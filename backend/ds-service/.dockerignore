@@ -1,0 +1,6 @@
+dsenv/
+dist/
+*.egg-info/
+__pycache__/
+.env
+.gitignore

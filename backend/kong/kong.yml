@@ -1,0 +1,50 @@
+_format_version: "3.0"
+
+services:
+  # ── Auth Service (UNPROTECTED — login/signup/refresh must work without a token) ──
+  - name: auth-service
+    url: http://auth-service:9898
+    routes:
+      - name: auth-route
+        paths:
+          - /auth
+        strip_path: false
+
+  # ── User Service (PROTECTED) ─────────────────────────────────
+  - name: user-service
+    url: http://user-service:9810
+    routes:
+      - name: user-route
+        paths:
+          - /user
+        strip_path: false
+    plugins:
+      - name: custom-auth
+        config:
+          auth_service_url: http://auth-service:9898/auth/v1/ping
+
+  # ── Expense Service (PROTECTED) ──────────────────────────────
+  - name: expense-service
+    url: http://expense-service:9820
+    routes:
+      - name: expense-route
+        paths:
+          - /expense
+        strip_path: false
+    plugins:
+      - name: custom-auth
+        config:
+          auth_service_url: http://auth-service:9898/auth/v1/ping
+
+  # ── DS Service (PROTECTED) ───────────────────────────────────
+  - name: ds-service
+    url: http://ds-service:8010
+    routes:
+      - name: ds-route
+        paths:
+          - /v1/ds
+        strip_path: false
+    plugins:
+      - name: custom-auth
+        config:
+          auth_service_url: http://auth-service:9898/auth/v1/ping
